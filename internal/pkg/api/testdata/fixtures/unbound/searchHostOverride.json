@@ -1,0 +1,18 @@
+{
+  "rows": [
+    {
+      "uuid": "2f0e73f7-fe3f-43fa-b8b0-fdf0ba48452c",
+      "enabled": "1",
+      "hostname": "ha",
+      "domain": "home.yarotsky.me",
+      "rr": "A (IPv4 address)",
+      "mxprio": "",
+      "mx": "",
+      "server": "192.168.1.13",
+      "description": ""
+    }
+  ],
+  "rowCount": 1,
+  "total": 1,
+  "current": 1
+}
