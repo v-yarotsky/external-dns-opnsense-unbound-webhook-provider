@@ -14,7 +14,7 @@
 1. Create OPNsense credentials for external-dns.
   1. Under `System -> Groups`, create a group named `external-dns`.
   2. Edit the newly created group, and add `Services: Unbound DNS: Edit Host and Domain Override` permission under `Assigned Privileges`.
-     ![OPNsense group](./docs/images/opnsense-external-dns-group.png)
+     ![OPNsense group](./doc/images/opnsense-external-dns-group.png)
   3. Under `System -> Users`, create a user named `external-dns`.
      Make sure to check "Generate a scrambled password to prevent local database logins for this user.".
      Set the "Login shell" to `/usr/sbin/nologin`.
