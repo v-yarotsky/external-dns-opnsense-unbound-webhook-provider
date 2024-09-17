@@ -23,7 +23,7 @@
 
 2. Create namespace `external-dns` in Kubernetes.
 
-3. In the namespace created above, create a Kubernetes secret called `external-dns-opnsense-secret` that holds `key` and `secret` with their respected values from step 1.
+3. In the namespace created above, create a Kubernetes secret called `external-dns-opnsense-secret` that holds `key` and `secret` with their respective values from step 1.
 
 4. Create the helm values file, for example `external-dns-opnsense-values.yaml`:
 
