@@ -3,8 +3,8 @@
   "packages": [
     "go@1.22",
     "gopls@0.15.3",
-    "goreleaser@2.2",
-    "golangci-lint@latest"
+    "golangci-lint@latest",
+    "goreleaser@latest"
   ],
   "shell": {
     "init_hook": [
