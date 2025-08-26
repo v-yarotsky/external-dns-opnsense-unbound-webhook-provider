@@ -22,6 +22,7 @@ type API interface {
 	CreateHostAlias(context.Context, HostAlias) (HostAlias, error)
 	UpdateHostAlias(context.Context, HostAlias) error
 	DeleteHostAlias(context.Context, HostAlias) error
+	Reconfigure(context.Context) error
 }
 
 type unboundClient struct {
@@ -210,6 +211,10 @@ type DeleteHostAliasResponse struct {
 	Result string `json:"result"` // "deleted"
 }
 
+type ReconfigureResponse struct {
+	Status string `json:"status"` // "ok"
+}
+
 func (u *unboundClient) ListHostOverrides(ctx context.Context) ([]HostOverride, error) {
 	req := &SearchHostOverrideRequest{Current: 1, RowCount: -1}
 
@@ -391,6 +396,21 @@ func (u *unboundClient) DeleteHostAlias(ctx context.Context, rec HostAlias) erro
 	if res.Result != "deleted" {
 		slog.Error("delHostAlias failed", slog.Any("alias", rec), slog.Any("response", res))
 		return fmt.Errorf("delHostAlias failed: %s", res.Result)
+	}
+
+	return nil
+}
+
+func (u *unboundClient) Reconfigure(ctx context.Context) error {
+	var res ReconfigureResponse
+
+	if err := u.postJSON(ctx, "/api/unbound/service/reconfigure", map[string]interface{}{}, &res); err != nil {
+		return err
+	}
+
+	if res.Status != "ok" {
+		slog.Error("reconfigure failed", slog.Any("response", res))
+		return fmt.Errorf("reconfigure failed: %s", res.Status)
 	}
 
 	return nil

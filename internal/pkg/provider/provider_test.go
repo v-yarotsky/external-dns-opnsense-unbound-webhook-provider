@@ -14,8 +14,9 @@ import (
 )
 
 type fakeAPI struct {
-	hostOverrides []api.HostOverride
-	hostAliases   []api.HostAlias
+	hostOverrides     []api.HostOverride
+	hostAliases       []api.HostAlias
+	ReconfigureCalled bool
 }
 
 func (f *fakeAPI) ListHostOverrides(_ context.Context) ([]api.HostOverride, error) {
@@ -67,6 +68,11 @@ func (f *fakeAPI) DeleteHostAlias(_ context.Context, ha api.HostAlias) error {
 	f.hostAliases = slices.DeleteFunc(f.hostAliases, func(e api.HostAlias) bool {
 		return e == ha
 	})
+	return nil
+}
+
+func (f *fakeAPI) Reconfigure(_ context.Context) error {
+	f.ReconfigureCalled = true
 	return nil
 }
 
@@ -181,6 +187,7 @@ func TestApplyChanges(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.ElementsMatch(t, fake.hostOverrides, []api.HostOverride{})
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 
 	t.Run("deletes Host Alias when a CNAME record is deleted", func(t *testing.T) {
@@ -216,6 +223,7 @@ func TestApplyChanges(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.ElementsMatch(t, fake.hostAliases, []api.HostOverride{})
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 
 	t.Run("creates a Host Override when an A record is created", func(t *testing.T) {
@@ -237,6 +245,7 @@ func TestApplyChanges(t *testing.T) {
 		require.Equal(t, "example.com", fake.hostOverrides[0].Domain)
 		require.Equal(t, "127.0.0.1", fake.hostOverrides[0].Server)
 		require.NotEmpty(t, fake.hostOverrides[0].ID)
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 
 	t.Run("creates a Host Alias when a CNAME record is created", func(t *testing.T) {
@@ -268,6 +277,7 @@ func TestApplyChanges(t *testing.T) {
 		require.Equal(t, "a.example.com", fake.hostAliases[0].Host)
 		require.Equal(t, api.HostOverrideID("a"), fake.hostAliases[0].HostID)
 		require.NotEmpty(t, fake.hostAliases[0].ID)
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 
 	t.Run("updates Host Overrides when an A record is updated", func(t *testing.T) {
@@ -308,6 +318,7 @@ func TestApplyChanges(t *testing.T) {
 				Server:   "127.0.0.2",
 			},
 		})
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 
 	t.Run("updates Host Alias when a CNAME record is updated", func(t *testing.T) {
@@ -358,5 +369,6 @@ func TestApplyChanges(t *testing.T) {
 				HostID:   api.HostOverrideID("a"),
 			},
 		})
+		require.True(t, fake.ReconfigureCalled, "expected reconfigure to be called on Unbound")
 	})
 }

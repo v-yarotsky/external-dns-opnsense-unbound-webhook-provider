@@ -226,6 +226,11 @@ func (p *unboundProvider) ApplyChanges(ctx context.Context, changes *plan.Change
 		}
 	}
 
+	if err := p.api.Reconfigure(ctx); err != nil {
+		slog.Error("failed to reconfigure Unbound")
+		return fmt.Errorf("failed to reconfigure Unbound: %w", err)
+	}
+
 	return nil
 }
 

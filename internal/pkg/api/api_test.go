@@ -277,3 +277,25 @@ func TestDeleteHostAlias(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestReconfigure(t *testing.T) {
+	t.Run("applies Unbound DNS settings", func(t *testing.T) {
+		client, teardown := setup(t)
+		t.Cleanup(teardown)
+
+		mux.HandleFunc("/api/unbound/service/reconfigure", func(w http.ResponseWriter, r *http.Request) {
+			var req map[string]interface{}
+			json.NewDecoder(r.Body).Decode(&req)
+
+			require.Equal(t, map[string]interface{}{}, req)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprint(w, fixture(t, "unbound/reconfigure.json"))
+		})
+
+		err := client.Reconfigure(context.Background())
+
+		require.NoError(t, err)
+	})
+}
