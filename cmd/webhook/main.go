@@ -22,17 +22,19 @@ func (i *stringSliceFlag) Set(value string) error {
 	return nil
 }
 
+const DefaultBaseURL = "https://192.168.1.1"
+
 func main() {
 	var baseURL, apiKey, apiSecret string
 	var domains stringSliceFlag
 
-	flag.StringVar(&baseURL, "base-url", "https://192.168.1.1", "OPNSense API base URL")
+	flag.StringVar(&baseURL, "base-url", DefaultBaseURL, "OPNSense API base URL")
 	flag.StringVar(&apiKey, "api-key", "", "OPNSense API key")
 	flag.StringVar(&apiSecret, "api-secret", "", "OPNSense API secret")
 	flag.Var(&domains, "domains", "Domain filter. Can be used multiple times. "+
 		"foo.com means foo.com and anything that ends in .foo.com")
 
-	if baseURL == "" {
+	if baseURL == DefaultBaseURL && os.Getenv("UNBOUND_BASE_URL") != "" {
 		baseURL = os.Getenv("UNBOUND_BASE_URL")
 	}
 

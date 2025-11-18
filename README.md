@@ -45,7 +45,7 @@
               secretKeyRef:
                 name: external-dns-opnsense-secret
                 key: secret
-          - name: UNBOUND_URL
+          - name: UNBOUND_BASE_URL
             value: https://192.168.1.1 # replace with the address of your OPNsense router
           - name: UNBOUND_DOMAIN_FILTER
             value: example.com # replace with your domain;
