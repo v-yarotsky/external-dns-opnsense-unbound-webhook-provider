@@ -77,5 +77,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	api.StartHTTPApi(prov, nil, 5*time.Second, 5*time.Second, ":8888")
+	api.StartHTTPApi(prov, nil, 30*time.Second, 30*time.Second, ":8888")
 }
