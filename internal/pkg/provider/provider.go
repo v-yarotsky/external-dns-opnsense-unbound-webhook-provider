@@ -254,7 +254,7 @@ func (p *unboundProvider) fetchAliases(ctx context.Context, overrides []api.Host
 	g.SetLimit(10)
 	for i, ho := range overrides {
 		g.Go(func() error {
-			res, err := p.api.ListHostAliases(ctx, ho.ID)
+			res, err := p.api.ListHostAliases(ctx, ho)
 			if err != nil {
 				slog.Error("failed to list CNAME records", slog.Any("hostOverride", ho), slog.Any("error", err))
 				return err

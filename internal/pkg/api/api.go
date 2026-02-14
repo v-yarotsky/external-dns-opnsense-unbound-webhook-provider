@@ -18,7 +18,7 @@ type API interface {
 	CreateHostOverride(context.Context, HostOverride) (HostOverride, error)
 	DeleteHostOverride(context.Context, HostOverride) error
 	UpdateHostOverride(context.Context, HostOverride) error
-	ListHostAliases(context.Context, HostOverrideID) ([]HostAlias, error)
+	ListHostAliases(context.Context, HostOverride) ([]HostAlias, error)
 	CreateHostAlias(context.Context, HostAlias) (HostAlias, error)
 	UpdateHostAlias(context.Context, HostAlias) error
 	DeleteHostAlias(context.Context, HostAlias) error
@@ -176,12 +176,12 @@ type SearchHostAliasResponse struct {
 }
 
 type SearchHostAlias struct {
-	ID          HostAliasID `json:"uuid"`        // "18b07c57-fce4-43ad-8bd8-5fb0e8777800"
-	Enabled     string      `json:"enabled"`     // "1"
-	Hostname    string      `json:"hostname"`    // "ha"
-	Domain      string      `json:"domain"`      // "home.yarotsky.me"
-	Host        string      `json:"host"`        // "traefik.home.yarotsky.me"
-	Description string      `json:"description"` // ""
+	ID          HostAliasID    `json:"uuid"`        // "18b07c57-fce4-43ad-8bd8-5fb0e8777800"
+	Enabled     string         `json:"enabled"`     // "1"
+	Hostname    string         `json:"hostname"`    // "ha"
+	Domain      string         `json:"domain"`      // "home.yarotsky.me"
+	Host        HostOverrideID `json:"host"`        // "2f0e73f7-fe3f-43fa-b8b0-fdf0ba48452c"
+	Description string         `json:"description"` // ""
 }
 
 type HostAliasRequest struct {
@@ -306,11 +306,11 @@ func (u *unboundClient) UpdateHostOverride(ctx context.Context, rec HostOverride
 	return nil
 }
 
-func (u *unboundClient) ListHostAliases(ctx context.Context, id HostOverrideID) ([]HostAlias, error) {
+func (u *unboundClient) ListHostAliases(ctx context.Context, ho HostOverride) ([]HostAlias, error) {
 	req := &SearchHostAliasRequest{
 		Current:  1,
 		RowCount: -1,
-		HostID:   id,
+		HostID:   ho.ID,
 	}
 
 	var res SearchHostAliasResponse
@@ -325,8 +325,8 @@ func (u *unboundClient) ListHostAliases(ctx context.Context, id HostOverrideID) 
 			ID:       HostAliasID(row.ID),
 			Hostname: row.Hostname,
 			Domain:   row.Domain,
-			Host:     row.Host,
-			HostID:   id,
+			Host:     ho.DNSName(),
+			HostID:   ho.ID,
 		}
 		result = append(result, rec)
 	}

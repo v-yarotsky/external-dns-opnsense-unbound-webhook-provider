@@ -178,7 +178,13 @@ func TestListHostAliases(t *testing.T) {
 			fmt.Fprint(w, fixture(t, "unbound/searchHostAlias.json"))
 		})
 
-		got, err := client.ListHostAliases(context.Background(), api.HostOverrideID("2f0e73f7-fe3f-43fa-b8b0-fdf0ba48452c"))
+		ho := api.HostOverride{
+			ID:       api.HostOverrideID("2f0e73f7-fe3f-43fa-b8b0-fdf0ba48452c"),
+			Hostname: "traefik",
+			Domain:   "home.yarotsky.me",
+			Server:   "192.168.1.13",
+		}
+		got, err := client.ListHostAliases(context.Background(), ho)
 		require.NoError(t, err)
 
 		want := []api.HostAlias{

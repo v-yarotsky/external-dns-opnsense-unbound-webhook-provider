@@ -45,7 +45,7 @@ func (f *fakeAPI) UpdateHostOverride(_ context.Context, ho api.HostOverride) err
 	return nil
 }
 
-func (f *fakeAPI) ListHostAliases(_ context.Context, _ api.HostOverrideID) ([]api.HostAlias, error) {
+func (f *fakeAPI) ListHostAliases(_ context.Context, _ api.HostOverride) ([]api.HostAlias, error) {
 	return f.hostAliases, nil
 }
 
