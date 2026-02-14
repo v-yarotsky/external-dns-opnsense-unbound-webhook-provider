@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/v-yarotksy/external-dns-opnsense-unbound-webhook-provider/internal/pkg/api"
+	"golang.org/x/sync/errgroup"
 	"sigs.k8s.io/external-dns/endpoint"
 	"sigs.k8s.io/external-dns/plan"
 	"sigs.k8s.io/external-dns/provider"
@@ -55,24 +56,23 @@ type unboundProvider struct {
 }
 
 func (p *unboundProvider) Records(ctx context.Context) ([]*endpoint.Endpoint, error) {
-	res, err := p.api.ListHostOverrides(ctx)
+	overrides, err := p.api.ListHostOverrides(ctx)
 	if err != nil {
 		slog.Error("failed to list A records", slog.Any("error", err))
 		return nil, err
 	}
-	result := make([]*endpoint.Endpoint, 0, len(res))
-	for _, r := range res {
+
+	aliases, err := p.fetchAliases(ctx, overrides)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*endpoint.Endpoint, 0, len(overrides)+len(aliases))
+	for _, r := range overrides {
 		result = append(result, r.Endpoint())
-
-		cnameRes, err := p.api.ListHostAliases(ctx, r.ID)
-		if err != nil {
-			slog.Error("failed to list CNAME records", slog.Any("hostOverride", r), slog.Any("error", err))
-			return nil, err
-		}
-
-		for _, cr := range cnameRes {
-			result = append(result, cr.Endpoint())
-		}
+	}
+	for _, cr := range aliases {
+		result = append(result, cr.Endpoint())
 	}
 
 	slog.Info("list records", slog.Any("result", result))
@@ -97,16 +97,14 @@ func (p *unboundProvider) ApplyChanges(ctx context.Context, changes *plan.Change
 		aRecordsByDNSName[ho.DNSName()] = ho
 	}
 
-	cnameRecordsByDNSName := make(map[string]api.HostAlias, 100)
-	for _, ho := range hostOverrides {
-		res, err := p.api.ListHostAliases(ctx, ho.ID)
-		if err != nil {
-			slog.Error("failed to list CNAME records", slog.Any("hostOverride", ho), slog.Any("error", err))
-			return err
-		}
-		for _, ha := range res {
-			cnameRecordsByDNSName[ha.DNSName()] = ha
-		}
+	aliases, err := p.fetchAliases(ctx, hostOverrides)
+	if err != nil {
+		return err
+	}
+
+	cnameRecordsByDNSName := make(map[string]api.HostAlias, len(aliases))
+	for _, ha := range aliases {
+		cnameRecordsByDNSName[ha.DNSName()] = ha
 	}
 
 	for _, ep := range changes.Delete {
@@ -248,6 +246,32 @@ func (u *unboundProvider) GetDomainFilter() endpoint.DomainFilter {
 	return endpoint.DomainFilter{
 		Filters: u.domains,
 	}
+}
+
+func (p *unboundProvider) fetchAliases(ctx context.Context, overrides []api.HostOverride) ([]api.HostAlias, error) {
+	batches := make([][]api.HostAlias, len(overrides))
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(10)
+	for i, ho := range overrides {
+		g.Go(func() error {
+			res, err := p.api.ListHostAliases(ctx, ho.ID)
+			if err != nil {
+				slog.Error("failed to list CNAME records", slog.Any("hostOverride", ho), slog.Any("error", err))
+				return err
+			}
+			batches[i] = res
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	var aliases []api.HostAlias
+	for _, batch := range batches {
+		aliases = append(aliases, batch...)
+	}
+	return aliases, nil
 }
 
 var _ provider.Provider = &unboundProvider{}
