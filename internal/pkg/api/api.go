@@ -427,19 +427,19 @@ func (u *unboundClient) postJSON(ctx context.Context, path string, body interfac
 
 	url := u.URL.JoinPath(path)
 	req, err := http.NewRequestWithContext(ctx, "POST", url.String(), bytes.NewReader(reqBodyJSON))
-	req.Header.Add("Content-Type", "application/json;charset=UTF-8")
-	req.SetBasicAuth(u.APIKey, u.APISecret)
-
 	if err != nil {
 		logger.Error("failed to prepare request", slog.Any("error", err))
 		return fmt.Errorf("failed to prepare request: %w", err)
 	}
+	req.Header.Add("Content-Type", "application/json;charset=UTF-8")
+	req.SetBasicAuth(u.APIKey, u.APISecret)
 
 	res, err := u.client.Do(req)
 	if err != nil {
 		logger.Error("request failed", slog.Any("error", err))
 		return fmt.Errorf("request failed: %w", err)
 	}
+	defer res.Body.Close()
 
 	err = json.NewDecoder(res.Body).Decode(out)
 	if err != nil {
